@@ -1,5 +1,29 @@
 c
 c
+c     Cligen version 5.32  03/14/2013 Jim Frankenberger
+c       - using observed option (type=6) the tpeak variable
+c         was being generated based only the cligen predicted days
+c         with precip so most days with observed data had tpeak=0.
+c         Updated to make sure type 6 input has the same distribution
+c         of tpeak as generated precip.
+c
+c       Cligen version 5.31  01/31/2013 Jim Frankenberger
+c        - Corrected solar radiation, it was not using standard
+c          deviations from input par file. Increased year field to 5
+c          digits for 10000 year+ runs.
+c
+c       Cligen version 5.30002. 09/14/09 Fred Fox
+c        - Extended character string length for reading command line
+c          arguments to allow longer output path length on linux.
+c          Should now allow paths as long as WEPS. Path length on
+c          Windows was already longer than maximum allowed.
+c
+c	Cligen version 5.30001. 06/30/09 Bill Rust
+c	 - Changed order of reading in wet/wet & wet/dry
+c	   Equivalence statement had interleaved the values
+c	   making them incorrect
+c	   Affected only Yoder-Foster & Fourier interpolation
+c
 c       Cligen version 5.3. 01/15/2008 Jim Frankenberger
 c        - Corrected dew point calculation for a type 6 run.
 c          Dew point was not being calculated from tmin and tmax values
@@ -449,8 +473,8 @@ c
       include 'cbk7.inc'
 c      read: prw,k1,k2,k3,k4,k5,k7,k8,k9
 c      write: v1,v3,v5,v7,v9,v11,yls,ylc,pit,nsim,msim,l
-c     prw(1,12)   - monthly probability of wet day after wet day
-c     prw(2,12)   - monthly probability of wet day after dry day
+c     prw(12,1)   - monthly probability of wet day after wet day
+c     prw(12,2)   - monthly probability of wet day after dry day
 c     k1 ... k9   - Seeds for random number generation.
 c     v1 ... v11  - Random numbers used to generate various daily values.
 c     yls         - ??? -- Used to compute CH and YS. sin(ylt/clt) sin(latitude)c     ylc         - ??? -- Used to compute CH and YC. cos(ylt/clt) cos(latitude)c     pit         - ??? -- Used to compute SD.  Defined as pit=58.13
@@ -480,7 +504,7 @@ c
 c
 c     + + + LOCAL VARIABLES + + +
 CC    integer numarg
-      character*256 argv
+      character*512 argv
       integer ti(4)
       real sumpp(13),sumptx(12),sumptm(12),sumprd(12),sumpdr(12)
       real smy(12),wgt(3),tymax(4),timpkd(0:12),tmpcmx(12),tmpcmn(12)
@@ -574,7 +598,7 @@ c     + + + OUTPUT FORMATS + + +
  2080 format(/1x,'Do you want to continue (y/n)? ')
 c
 c     + + + END SPECIFICATIONS + + +
-      version=5.3
+      version=5.32000
 c
 c *************************************************************
 c **************** BEGIN COMPILER-SPECIFIC CODE ***************
@@ -731,16 +755,8 @@ c           write(*,*) 'CLIGEN - Climate Generator V-5.101 Feb. 2001'
 c           write(*,*) 'CLIGEN - Climate Generator V-5.102 Mar. 2001'
 c           write(*,*) 'CLIGEN - Climate Generator V-5.103 Apr. 2001'
             write(*,"('CLIGEN - Climate Generator V-', f7.5,
-c    1                ' Mar. 2003')")
-c    1                ' Apr. 2001')")
-c    1                ' May 2004')")
-c    1                ' July 2004')")
-c    1                ' Aug. 2003')")
-c    1                ' Sept. 2004')")
-     1                ' Oct. 2004')")
-c    1                ' Nov. 2003')")
+     1                ' Jan. 2013')") version
 
-     2                version
             write(*,*) 'Modified to support Command Line Options.'
             write(*,*)
 c
@@ -1090,8 +1106,8 @@ c
 c      read: prw,obmx,obmn,obsl,k1,k2,k3,k4,k5,k9,yls,ylc,pit,nsim,msim,
 c            stdtx,stdtm
 c      modify: rst,v1,v3,v5,v7,v11,ra,tmxg,tmng,rmx,l
-c     prw(1,12)   - monthly probability of wet day after wet day
-c     prw(2,12)   - monthly probability of wet day after dry day
+c     prw(12,1)   - monthly probability of wet day after wet day
+c     prw(12,2)   - monthly probability of wet day after dry day
 c     obmx        - Mean Observed Maximum Temperature for the month.
 c     obmn        - Mean Observed Minimum Temperature for the month.
 c     k1 ... k9   - Seeds for random number generation.
@@ -1180,7 +1196,7 @@ c
       if (nsim.ne.0) then
         vv=vvx(dax)
 CC      tap1=vv
-        if ((prw(l,mo).le.0.0).or.(vv.gt.prw(l,mo))) then
+        if ((prw(mo,l).le.0.0).or.(vv.gt.prw(mo,l))) then
           r(ida)=0.0
           l=2
 CC        tap3=0.0
@@ -1438,25 +1454,39 @@ c ---- Compute Daily Radiation.
       ra=xx*dstn1(v5,v6)
 C     tap5=ra
 c ---------(interpolate radiation)
-          if(interp.eq.0) then
-            tmpv10 = obsl(mo)
-          else if(interp .eq. 1) then
-            tmpv10 = obsl(mo)*lf + obsl(o_mo)*rf
-          else if(interp .eq. 2) then
-            tmpv10 = fouri2(10)
-          else if(interp .eq. 3) then
-            tmpv10 = ryf2(mo,dax,ntd,10)
-          endif
+c   Changed 3/3/2010 - to use the standard deviation from the par file
+c   when coming up with daily solar radiation values. Similar to how 
+c   tmax and tmin are done. jrf
+      if(interp.eq.0) then
+        tmpv10 = obsl(mo)
+        tmpv11 = stdsl(mo)
+      else if(interp .eq. 1) then
+        tmpv10 = obsl(mo)*lf + obsl(o_mo)*rf
+        tmpv11 = stdsl(mo)*lf + stdsl(o_mo)*rf
+      else if(interp .eq. 2) then
+        tmpv10 = fouri2(10)
+        tmpv11 = fouri2(11)
+      else if(interp .eq. 3) then
+        tmpv10 = ryf2(mo,dax,ntd,10)
+        tmpv11 = ryf2(mo,dax,ntd,11)
+      endif
+c --- include standard deviation in value          
+      ra = tmpv10 + ra*tmpv11
+c ---- end changes for interpolation      
 c -----A mutation of Equations 2.1.12 & 2.1.13: (Mis-placed parens,
 c      this time in WEPP User Doc ?)
-C     rx=rmx-obsl(mo)
-C     if (obsl(mo).gt.rx) rx=obsl(mo)
-C     ra=obsl(mo)+ra*rx/4.0
-      rx=rmx-tmpv10
-      if (tmpv10.gt.rx) rx=tmpv10
-      ra=tmpv10+ra*rx/4.0
-      if(ra.ge.rmx) ra=0.90*rmx
-      if (ra.le.0.0) ra=0.05*rmx
+c     rx=rmx-obsl(mo)
+c     if (obsl(mo).gt.rx) rx=obsl(mo)
+c     ra=obsl(mo)+ra*rx/4.0
+c      rx=rmx-tmpv10
+c      if (tmpv10.gt.rx) rx=tmpv10
+c      ra=tmpv10+ra*rx/4.0
+c      if(ra.ge.rmx) ra=0.90*rmx
+c      if (ra.le.0.0) ra=0.05*rmx      
+c  check that solar radiation is within bounds
+c  updated 1/31/2013 to match wepp documentation
+      if(ra.gt.rmx) ra=rmx
+      if (ra.lt.(rmx*0.05)) ra=0.05*rmx
 c ------ Shift 2nd constant to 1st position for "reuse".
       v5=v6
 c
@@ -1884,8 +1914,8 @@ c                               standard deviation of the daily precip
 c                               value (inches) (by month)
 c                             3=skew coefficient of daily rainfall
 c
-c     prw(1,12)   - monthly probability of wet day after wet day
-c     prw(2,12)   - monthly probability of wet day after dry day
+c     prw(12,1)   - monthly probability of wet day after wet day
+c     prw(12,2)   - monthly probability of wet day after dry day
 c
       include 'cbk4.inc'
 c      read: nc
@@ -1909,13 +1939,13 @@ c ---- average each month's WI with the month on either side.
       sm(12)=(wi(11)+wi(12)+wi(1))/3.0
 c
       do 30 i=1,12
-         if(prw(1,i).eq.0.0) prw(1,i)=0.01
-         if(prw(2,i).eq.0.0) prw(2,i)=0.01
+         if(prw(i,1).eq.0.0) prw(i,1)=0.01
+         if(prw(i,2).eq.0.0) prw(i,2)=0.01
          if(rst(i,1).eq.0.0) rst(i,1)=0.01
          xm=nc(i+1)-nc(i)
 c -- XXX -- The equation below is backwards from the one to compute
 c           Historic Monthly Precip amount -- CRM -- 7/30/00.
-         smm(i)=xm*prw(1,i)/(1.0-prw(2,i)+prw(1,i))
+         smm(i)=xm*prw(i,1)/(1.0-prw(i,2)+prw(i,1))
          r25=rst(i,1)
          f=xy2/smm(i)
          wi(i)=-sm(i)/alog(f)
@@ -2123,15 +2153,7 @@ c    1       2x,'*',66x,'*',/,2x,'*',27x,'VERSION ',f5.3,26x,'*',/,
 c    1       2x,'*',66x,'*',/,2x,'*',27x,'VERSION ',f6.4,25x,'*',/,
      1       2x,'*',66x,'*',/,2x,'*',26x,'VERSION ',f7.5,25x,'*',/,
      2       2x,'*',21x,'Revised from VERSION 4.2',21x,'*',/,
-c    3       2x,'*',26x,' January 2004 ',26x,'*',/,2x,'*',66x,'*',/,
-c    3       2x,'*',26x,'   March 2003 ',26x,'*',/,2x,'*',66x,'*',/,
-c    3       2x,'*',26x,'   April 2004 ',26x,'*',/,2x,'*',66x,'*',/,
-c    3       2x,'*',26x,'     May 2004 ',26x,'*',/,2x,'*',66x,'*',/,
-c    3       2x,'*',26x,'    July 2004 ',26x,'*',/,2x,'*',66x,'*',/,
-c    3       2x,'*',26x,'  August 2003 ',26x,'*',/,2x,'*',66x,'*',/,
-c    3       2x,'*',26x,'   Sept. 2004 ',26x,'*',/,2x,'*',66x,'*',/,
-     3       2x,'*',26x,' October 2004 ',26x,'*',/,2x,'*',66x,'*',/,
-c    3       2x,'*',26x,'December 2003 ',26x,'*',/,2x,'*',66x,'*',/,
+c    3       2x,'*',26x,' January 2013 ',26x,'*',/,2x,'*',66x,'*',/,
      4       2x,'*',11x,'(Use -h or /h to list command line options.)',
      5       11x,'*',/,2x,'*',66x,'*',/,2x,68('*'),//)
 c
@@ -2166,11 +2188,19 @@ c
       include 'crandom3.inc'
 c        read: zx, dax
 c       write: z
+      include 'cbk4.inc'
+c         read: iopt 
+c      
 CC    include 'ctap2.inc'
 c
 c     + + + END SPECIFICATIONS + + +
 c
-      z=zx(dax)
+      if (iopt.eq.6) then
+         z = randn(k10)
+      else
+         z=zx(dax)
+      endif
+      
 CC    tap4=z
 C     write(*,*) tap4
       i=0
@@ -2669,8 +2699,8 @@ c                               standard deviation of the daily precip
 c                               value (inches) (by month)
 c                             3=skew coefficient of daily rainfall
 c
-c     prw(1,12)   - monthly probability of wet day after wet day
-c     prw(2,12)   - monthly probability of wet day after dry day
+c     prw(12,1)   - monthly probability of wet day after wet day
+c     prw(12,2)   - monthly probability of wet day after dry day
 c     obmx        - Maximum Temperature.
 c     obmn        - Minimum Temperature.
 c     obsl        - Observed mean daily solar radiation (Langleys) (by month)
@@ -2744,7 +2774,7 @@ c
       read(10,1000)ylt,yll,years,itype,elev,tp6
       read(10,1010)(rst(i,1),i=1,12),(rst(i,2),i=1,12),(rst(i,3),
      1             i=1,12)
-      read(10,1010)(prw(1,i),i=1,12),(prw(2,i),i=1,12)
+      read(10,1010)(prw(i,1),i=1,12),(prw(i,2),i=1,12)
       read(10,1010)(obmx(i),i=1,12)
       read(10,1010)(obmn(i),i=1,12)
       read(10,1010)(stdtx(i),i=1,12),(stdtm(i),i=1,12)
@@ -2887,7 +2917,7 @@ c **** L1 IF ****
         write(*,2020)obsl
         write(*,2030)
         do 90 i=1,12
-          write(*,2040) prw(1,i),prw(2,i)
+          write(*,2040) prw(i,1),prw(i,2)
  90     continue
         write(*,2050)
         do 100 i=1,12
@@ -2994,7 +3024,7 @@ c     + + + INPUT FORMATS + + +
  1000 format(15x,3i5)
 c
 c     + + + OUTPUT FORMATS + + +
- 2000 format(2i3,1x,i4,1x,f5.1,1x,f5.2,1x,f4.2,1x,f6.2,2(1x,f5.1),
+ 2000 format(2i3,1x,i5,1x,f5.1,1x,f5.2,1x,f4.2,1x,f6.2,2(1x,f5.1),
      1       1x,f4.0,1x,f4.1,2x,f4.0,1x,f5.1)
 c2001 format(i2,1x,6g17.9)
  2001 format(i2,1x,6f17.13)
@@ -3679,7 +3709,7 @@ c  CALCULATE MONTHLY RAINFALL AMOUNTS
             do 111 kkk = 1,12
               xm = nc(kkk+1)-nc(kkk)
 c ---------- calculate number of days of rainfall in month
-              smy(kkk) = xm*prw(2,kkk)/(1.-prw(1,kkk) + prw(2,kkk))
+              smy(kkk) = xm*prw(kkk,2)/(1.-prw(kkk,1) + prw(kkk,2))
 c ---------- monthly rainfall in mm
               smy(kkk) = smy(kkk) * rst(kkk,1) * 25.4
 c ---------- Convert Observed Temps to degrees-C
@@ -3868,7 +3898,7 @@ c                                      3-month running average
 
       do 30 i=1,12
 
-         if(prw(2,i).eq.0.0) then
+         if(prw(i,2).eq.0.0) then
            smm(i) = 0.0006944
 c                               ! = 1 min
          else
@@ -3877,7 +3907,7 @@ c                     xm - no. of calender days for the month,
 c                     smm - no. of rain days
 
            xm=nc(i+1)-nc(i)
-           smm(i)=xm*prw(2,i)/(1.0-prw(1,i)+prw(2,i))
+           smm(i)=xm*prw(i,2)/(1.0-prw(i,1)+prw(i,2))
          endif
 
          if(rst(i,1).eq.0.0) then
@@ -4075,7 +4105,7 @@ c        (Each parm uses its own instance of the random number generator.)
               ranary(i,j) = randn(k4)
             else if(j .eq. 5) then
 c ---------- we had precip today.
-              if(ranary(i,1) .le. prw(ell,mox)) then
+              if(ranary(i,1) .le. prw(mox,ell)) then
                 ranary(i,j) = randn(k5)
                 ell = 1
                 ldimp = ldimp + 1
@@ -4091,15 +4121,19 @@ c ---------- we didnt have precip today.
             else if(j .eq. 8) then
               ranary(i,j) = randn(k9)
             else if(j .eq. 9) then
-c------------ if there was precip today, generate a Tpeak:
-              if(ranary(i,5) .gt. 0.0) then
-C     write(*,*) "yes precip"
-                ranary(i,j) = randn(k10)
-                ell = 1
+              if (iopt.eq.6) then
+                 ranary(i,j) = 0.0
               else
+c------------   if there was precip today, generate a Tpeak:
+                if(ranary(i,5) .gt. 0.0) then
+C     write(*,*) "yes precip"
+                  ranary(i,j) = randn(k10)
+                 ell = 1
+                else
 C     write(*,*) " no precip"
-                ranary(i,j) = 0.0
-                ell = 2
+                  ranary(i,j) = 0.0
+                  ell = 2
+                endif
               endif
 C     write(*,*) ranary(i,j)
             endif
@@ -4123,6 +4157,9 @@ CC          if(j.ne.1 .and. j.ne.6 .and. j.ne.7 .and. j.ne.9) then
             endif
 c
  998      continue
+ 
+c        do stat's for everything but observed and tpeak 
+         if (iopt.ne.6 .or. j.ne.9) then
 c
 c ------ Update the Grand Count for the chi-square deviates for this month.
 C         if(iredo .eq. 9996)
@@ -4250,6 +4287,9 @@ c ---------- Give up and Bail Out:
 C       if((level0.gt.0.or.level.gt.thresh(j).or.level2.gt.thres2(j))
         if((level1.gt.0.or.level.gt.thresh(j).or.level2.gt.thres2(j))
      &     .and. iredo.lt.10000) goto 10
+c     
+c      don't do stats for observed and tpeak     
+       endif
 c
  999  continue
 c
