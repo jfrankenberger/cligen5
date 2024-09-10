@@ -1,3 +1,9 @@
+c       Cligen version 5.22564.  10/26/2004.  C. R. Meyer
+c        - In SR R5MONB variable WI(I) which is used to calculate AI,
+c          was getting hosed when F went negative.  This would mess up Ip
+c          for very dry climates where the average number of rainfall
+c          events is less than 0.5 .
+c
 c       Cligen version 5.22563.  10/21/2004.  C. R. Meyer
 c        - In SR USR_OPT variable NDFLAG was not being initialized unless
 c          the type of run was 6 or 8.  Added a default "else" to the loop
@@ -561,7 +567,7 @@ c     + + + OUTPUT FORMATS + + +
  2080 format(/1x,'Do you want to continue (y/n)? ')
 c
 c     + + + END SPECIFICATIONS + + +
-      version=5.22563
+      version=5.22564
 c
 c *************************************************************
 c **************** BEGIN COMPILER-SPECIFIC CODE ***************
@@ -717,7 +723,7 @@ c           write(*,*) 'CLIGEN - Climate Generator V-5.1 August 2000'
 c           write(*,*) 'CLIGEN - Climate Generator V-5.101 Feb. 2001'
 c           write(*,*) 'CLIGEN - Climate Generator V-5.102 Mar. 2001'
 c           write(*,*) 'CLIGEN - Climate Generator V-5.103 Apr. 2001'
-            write(*,"('CLIGEN - Climate Generator V-', f8.6,
+            write(*,"('CLIGEN - Climate Generator V-', f7.5,
 c    1                ' Mar. 2003')")
 c    1                ' Apr. 2001')")
 c    1                ' May 2004')")
@@ -733,7 +739,7 @@ c    1                ' Nov. 2003')")
 c
           else if(argv(2:2).eq.'?' .or. argv(2:2).eq.'h') then
             write(*,*)
-            write(*,"(' CLIGEN V-', f8.6, ' - Climate Generator w/ QC-',
+            write(*,"(' CLIGEN V-', f7.5, ' - Climate Generator w/ QC-',
      1                'SNDG')") version
             write(*,*) '   Usage:'
             write(*,*) '    cligen -S<state number> -s<station ID number
@@ -2070,7 +2076,7 @@ c     + + + OUTPUT FORMATS + + +
  2001 format(
 c    1       2x,'*',66x,'*',/,2x,'*',27x,'VERSION ',f5.3,26x,'*',/,
 c    1       2x,'*',66x,'*',/,2x,'*',27x,'VERSION ',f6.4,25x,'*',/,
-     1       2x,'*',66x,'*',/,2x,'*',26x,'VERSION ',f8.6,25x,'*',/,
+     1       2x,'*',66x,'*',/,2x,'*',26x,'VERSION ',f7.5,25x,'*',/,
      2       2x,'*',21x,'Revised from VERSION 4.2',21x,'*',/,
 c    3       2x,'*',26x,' January 2004 ',26x,'*',/,2x,'*',66x,'*',/,
 c    3       2x,'*',26x,'   March 2003 ',26x,'*',/,2x,'*',66x,'*',/,
@@ -3571,8 +3577,9 @@ c     + + + OUTPUT FORMATS + + +
      1       12(1x,f5.1))
  555  format(1x,'Observed monthly ave precipitation (mm)',/,
      1       12(1x,f5.1))
- 642  format(f8.6)
- 644  format('  Station: ',a41,6x,' CLIGEN VER. 5.22563 -r:',i5,' -I:'
+ 642  format(f7.5)
+c644  format('  Station: ',a41,6x,' CLIGEN VER. 5.22564 -r:',i5,' -I:'
+ 644  format('  Station: ',a41,6x,' CLIGEN VER.',f8.5,' -r:',i5,' -I:'
      1       ,i2,/ ' Latitude Longitude Elevation (m) Obs. Years ',
      1       '  Beginning year  Years simulated ', 'Command Line:'/
      1       2f9.2,i12,2i12,i16,
@@ -3609,8 +3616,10 @@ c
           write(7,778)isim,itemp,igcode
           if(iopt.ge.4) then
 C           write(7,644)stidd,ylt,yll,elev,years,iyear,numyr
-            write(7,644)stidd,irand,interp,ylt,yll,elev,years,iyear,
-     1                   numyr,arg_v(:av_len)
+c           write(7,644)stidd,irand,interp,ylt,yll,elev,years,iyear,
+c    1                   numyr,arg_v(:av_len)
+            write(7,644)stidd,version,irand,interp,ylt,yll,elev,years,
+     1                   iyear,numyr,arg_v(:av_len)
 c           write(7,646) iyear,numyr
 c
 c  **************************************************************
@@ -3823,8 +3832,6 @@ c                     xm - no. of calender days for the month,
 c                     smm - no. of rain days
 
            xm=nc(i+1)-nc(i)
-c -- XXX -- The equation below is backwards from the one to compute 
-c           Historic Monthly Precip amount -- CRM -- 7/30/00. 
            smm(i)=xm*prw(2,i)/(1.0-prw(1,i)+prw(2,i))
          endif
 
@@ -3848,7 +3855,8 @@ c                          the number of rain days is large.  B.YU
 
          f = 1./(smm(i)+0.5)
          f = -1./alog(f)
-         if (f .gt. 1.) then
+CRM      if (f .gt. 1.) then
+         if (f .gt. 1.0 .or. f .le. 0.0) then
 
 c                         If no. raindays/month < 2.218, no adjustment to
 c                         max 30-min rain is made.
