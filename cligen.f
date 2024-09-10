@@ -1,3 +1,10 @@
+c
+c
+c       Cligen version 5.3. 01/15/2008 Jim Frankenberger
+c        - Corrected dew point calculation for a type 6 run.
+c          Dew point was not being calculated from tmin and tmax values
+c          read from the observed input.
+c
 c       Cligen version 5.22564.  10/26/2004.  C. R. Meyer
 c        - In SR R5MONB variable WI(I) which is used to calculate AI,
 c          was getting hosed when F went negative.  This would mess up Ip
@@ -338,8 +345,8 @@ c     Please address inquiries to
 c
 c         WEPP Technical Support
 c         USDA-ARS-NSERL
-c         1196 Building SOIL
-c         West Lafayette, IN 47907-1196
+c         275 South Russell St.
+c         West Lafayette, IN 47907-2077
 c         Phone 765 494-8673
 c
 c --------------------------------------------------------------------------
@@ -567,7 +574,7 @@ c     + + + OUTPUT FORMATS + + +
  2080 format(/1x,'Do you want to continue (y/n)? ')
 c
 c     + + + END SPECIFICATIONS + + +
-      version=5.22564
+      version=5.3
 c
 c *************************************************************
 c **************** BEGIN COMPILER-SPECIFIC CODE ***************
@@ -1264,6 +1271,44 @@ C ------(interpolate max & min temp means & SD's)
           tmpvr9 = ryf2(mo,dax,ntd,9)
         endif
 c
+c  following by jrf 1/14/2008, dew point was not being
+c  generated for a type 6 run. 
+c  
+c ---------(interpolate Dew Point Temp)
+          if(interp.eq.0) then
+            tmpv13 = rh(mo)
+          else if(interp .eq. 1) then
+            tmpv13 = rh(mo)*lf + rh(o_mo)*rf
+          else if(interp .eq. 2) then
+            tmpv13 = fouri2(13)
+          else if(interp .eq. 3) then
+            tmpv13 = ryf2(mo,dax,ntd,13)
+          endif
+          
+          if(tmpvr8 .ge. tmpvr9) then
+c          SD_Delta:
+          twiddle = sqrt(tmpvr8**2 - tmpvr9**2)
+c          Delta_Mean:
+          twiddld = tmpvr6 - tmpvr7
+c          Tdew:
+          twiddle = sqrt(abs(((tmpvr8+tmpvr9)/2)**2 - tmpvr9**2))
+          twiddld = tmpv13 - tmpvr7
+          tdp = tmng + twiddld + tdp*twiddle
+c
+cC ------Generate Tdew based on Tmax-Delta:
+        else
+c          SD_Delta:
+          twiddle = sqrt(tmpvr9**2 - tmpvr8**2)
+c          Delta_Mean:
+          twiddld = tmpvr6 - tmpvr7
+c          Tdew:
+          twiddle = sqrt(abs(((tmpvr8+tmpvr9)/2)**2 - tmpvr8**2))
+          twiddld = tmpvr6 - tmpv13
+          tdp = tmxg - twiddld + tdp*twiddle
+        endif
+          
+c -- end insert by jrf 1/14/2008
+          
       else
         xx=1.
         v2=v2x(dax)
