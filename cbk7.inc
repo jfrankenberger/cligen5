@@ -7,7 +7,7 @@ C    1             k8(4),k9(4),k10(4),cvtx(12),cvtm(12),v1,v3,v5,v7,v9,
 C    1             v11,ra,tmxg,tmng,rmx,yls,ylc,pit,st0,amp,avt,ts,
 C    1             nsim,msim,l,tmx(5),tmn(5),tx(5),tb(5),to(5),
 C    1             dmm(12,5),dm1(5),stdtx(12),stdtm(12),stdsl(12)
-      common /bk7/ rst(12,3), prw(2,12),obmx(12),obmn(12),obsl(12),
+      common /bk7/ rst(12,3), prw(12,2),obmx(12),obmn(12),obsl(12),
      1             k1(4),k2(4),cvs(12),k3(4),k4(4),k5(4),k6(4),k7(4),
      1             k8(4),k9(4),k10(4),cvtx(12),cvtm(12),v1,v3,v5,v7,v9,
      1             v11,ra,tmxg,tmng,rmx,yls,ylc,pit,nsim,msim,l,
