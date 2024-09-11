@@ -9,8 +9,12 @@ For more information on CLIGEN see the USDA webpage at: (https://www.ars.usda.go
 The orginal version was written in the 1990's by Arlin Nicks. The version 5 releases include the additon of quality control on the output values to test that the generated values are matching the statistics of the input parameter file.
 
 This repository has the version 5 releases:
-- Version 4.2 - From 1997
-- Version 4.3 - From 1998, allowed runs to be made using a single station file
-- Version 4.2-recoded - From 1999, major restructng of the code by Chuck Meyer
+- Version 5.522.63 - 
+- Version 5.522.64 - 
+- Version 5.30 - 
+- Version 5.32 - 
+- Version 5.321 - 
+- Version 5.322 -
+
 
 Older original version 4 releases of CLIGEN are at: (https://github.com/jfrankenberger/cligen4)
