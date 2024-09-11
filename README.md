@@ -6,7 +6,7 @@ Unlike other climate generators, it produces individual storm parameter estimate
 
 For more information on CLIGEN see the USDA webpage at: (https://www.ars.usda.gov/midwest-area/west-lafayette-in/national-soil-erosion-research/docs/wepp/cligen/)
 
-The orginal version was written in the 1990's by Arlin Nicks. The version 5 releases include the additon of quality control on the output values to test that the generated values are matching the statistics of the input parameter file.
+The orginal version was written in the 1990's by Arlin Nicks. The version 5 releases include the addition of quality control on the output values to test that the generated values are matching the statistics of the input parameter file.
 
 This repository has the version 5 releases:
 - **Version 5.522.63** - In SR USR_OPT variable NDFLAG was not being initialized unless the type of run was 6 or 8.  Added a default "else" to the loop to set it to zero.
