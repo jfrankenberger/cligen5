@@ -18,7 +18,7 @@ This repository has the version 5 releases:
     +  Corrected solar radiation, it was not using standard deviations from input par file. Increased year field to 5 digits for 10000 year+ runs.
     +  Using observed option (type=6) the tpeak variable was being generated based only the cligen predicted days with precip so most days with observed data had tpeak=0. Updated to make sure type 6 input has the same distribution of tpeak as generated precip.
 - Version 5.321 - Fix for leap years to include years divisible by 400 but not divisible by 100
-- Version 5.322 - Corrected calculation of Coefficient of Variation so a zero monthly average temperature does not cause a divide by zero. Merged change from WEPS version 5.3004 12/13/18. Note that WEPS change 5.30003 is not included since it also was a correction for leap years already implememted.
+- Version 5.322 - Corrected calculation of Coefficient of Variation so a zero monthly average temperature does not cause a divide by zero. Merged change from WEPS version 5.3004 12/13/18. Note that WEPS change 5.30003 is not included since it also was a correction for leap years already implememted in 5.321.
 
 
 Older original version 4 releases of CLIGEN are at: (https://github.com/jfrankenberger/cligen4)
