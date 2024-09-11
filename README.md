@@ -13,4 +13,4 @@ This repository has the version 5 releases:
 - Version 4.3 - From 1998, allowed runs to be made using a single station file
 - Version 4.2-recoded - From 1999, major restructng of the code by Chuck Meyer
 
-Older original version 4 releases of CLIGEN are at: 
+Older original version 4 releases of CLIGEN are at: (https://github.com/jfrankenberger/cligen4)
