@@ -9,8 +9,8 @@ For more information on CLIGEN see the USDA webpage at: (https://www.ars.usda.go
 The orginal version was written in the 1990's by Arlin Nicks. The version 5 releases include the addition of quality control on the output values to test that the generated values are matching the statistics of the input parameter file.
 
 This repository has the version 5 releases:
-- **Version 5.522.63** - In SR USR_OPT variable NDFLAG was not being initialized unless the type of run was 6 or 8.  Added a default "else" to the loop to set it to zero.
-- **Version 5.522.64** - In SR R5MONB variable WI(I) which is used to calculate AI, was getting hosed when F went negative.  This would mess up Ip for very dry climates where the average number of rainfall events is less than 0.5
+- **Version 5.225.63** - In SR USR_OPT variable NDFLAG was not being initialized unless the type of run was 6 or 8.  Added a default "else" to the loop to set it to zero.
+- **Version 5.225.64** - In SR R5MONB variable WI(I) which is used to calculate AI, was getting hosed when F went negative.  This would mess up Ip for very dry climates where the average number of rainfall events is less than 0.5
 - **Version 5.30** - Corrected dew point calculation for a type 6 run. Dew point was not being calculated from tmin and tmax values read from the observed input.
 - **Version 5.32** -
     + Changed order of reading in wet/wet & wet/dry Equivalence statement had interleaved the values making them incorrect Affected only Yoder-Foster & Fourier interpolation From WEPS 5.30001
